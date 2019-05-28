@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+ 	<meta charset="UTF-8"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Ustawienia Wi-Fi</title>
+	<script type="text/javascript">
+		var networksFound = []
+		function hideModal() {document.getElementById('modal1').style.display = 'none';}
+
+		function scanNetworks(){
+			document.getElementById("wait-anim").style.display = "inline-block";
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+				if (this.readyState == 4) {
+					document.getElementById("wait-anim").style.display = "none";
+					if (this.status == 200){
+						var scanResults = document.getElementById("scan-results");
+						var networksFoundStr = this.responseText.split("\r\n");
+						var len = networksFoundStr.length;
+						var toAdd = "Znalezione sieci: <table id='found-networks'> "
+						for (i=0; i < len; i++){
+							var thisNetwork = networksFoundStr[i].split("\t");
+							if (thisNetwork.length < 5) {
+								continue;
+							}
+							networksFound[i] = thisNetwork;
+							toAdd += "<tr onClick='selectNthRadio("+i+");'> ";
+							toAdd += "<td> <input type = 'radio' name = 'net' onChange='onNetworkSelected(this.value);' value = '"+i+"'> </td>";
+							toAdd += "<td> " + thisNetwork[0] + " </td>";
+							toAdd += "<td> " + (thisNetwork[4] == 7 ? "🔓":"🔒") + " </td>";
+							toAdd += "</tr>";
+						}
+						toAdd += " </table>"
+						scanResults.innerHTML = toAdd;
+					}
+					else {
+						document.getElementById("scan-results").innerHTML = "Skanowanie nieudane";
+					}
+				}
+			};
+			xhttp.open("GET", "http://google.com/scan_networks");
+			xhttp.send();
+		}
+
+		function onNetworkSelected(i) { //I'm not sure if this function is necessary, but I'll keep it
+			document.cred.ssid.value = networksFound[i][0];
+		}
+
+		function selectNthRadio(i){
+			document.scan.net[i].checked = true;
+			document.cred.ssid.value = networksFound[i][0];
+		}
+
+		/*
+		function press(button_n) {
+			document.getElementById("modal1").style.display = "block";
+			document.getElementById("modal1-content").innerHTML = "Proszę czekać";
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+				if (this.readyState == 4) {
+					if (this.status == 200){
+						document.getElementById("modal1-content").innerHTML = "Połączono z siecią. <br> Proszę zresetować moduł.";
+					}
+					else {
+						document.getElementById("modal1-content").innerHTML = "Połączenie nieudane";
+					}
+				}
+			};
+			press_type = document.getElementById("isLong").checked ? "l" : "s";
+			xhttp.open("GET", "/act?" + press_type + "=" + button_n, true);
+			xhttp.send();
+		}
+		*/
+	</script>
+	<style type="text/css">
+		body {
+			font-family: sans-serif;
+			margin: 0;
+		}
+		div#content {
+			padding: 0 20px;
+		}
+
+		div#title {
+			margin-top: 0;
+			padding: 10px;
+			background-color: navy;
+			color: white;
+		}
+
+		div {
+			margin: 5px 0;
+		}
+
+		.modal {
+			display: none; 
+			position: fixed; 
+			z-index: 1;
+			left: 0;
+			top: 0;
+			width: 100%; 
+			height: 100%; 
+			overflow: auto;
+			background-color: rgb(0,0,0); 
+			background-color: rgba(0,0,0,0.4); 
+		}
+
+		.modal-content {
+			background-color: #fefefe;
+			margin: 15% auto;
+			padding: 10px;
+			border: 1px solid #888;
+			width: 80%;
+			text-align: center;
+		}
+
+		#scan-results {
+			
+		}
+		
+		@keyframes blue-blink {
+		    0%   {}
+		    50%  {background-color: blue; color: white;}
+		    100% {}
+		}
+		
+		#wait-anim {
+			/*display: inline-block;*/
+			display: none;
+			height: 100%;
+			padding: 0 10px;
+			background-color: transparent;
+			animation-name: blue-blink;
+    		animation-duration: 3s;
+    		animation-iteration-count: infinite;
+		}
+
+		table#found-networks {
+			border: 1px solid gray;
+			border-collapse: collapse;
+		}
+
+		table#found-networks td {
+			border: 1px solid gray;
+			padding: 2px 5px;
+		}
+
+		table#found-networks input {
+			margin: 0;
+		}
+
+	</style>
+</head>
+<body>
+	<div id="title"> <h1 id="title"> Ustawienia sieci Wi-Fi </h1> </div>
+	<div id="content">
+		<div id="scan">
+			<div><input type="button" value="Skanuj" onclick="scanNetworks();"> <div id="wait-anim">Skanowanie...</div> </div>
+			<form name="scan"><div id="scan-results">
+			</div></form>
+		</div>
+		<div>
+			<form name="cred" action="/send_data" method="POST">
+				<div>Nazwa sieci: <input type="text" name="ssid"> </div>
+				<div>Hasło: <input type="text" name="pass" autocomplete="off"> </div>
+				<div><input type="submit" value="Wyślij"></div>
+			</form>
+		</div>
+		<div id="modal1" class="modal" onclick="hideModal();">
+			<div class="modal-content" id="modal1-content">
+				<p>Ładowanie...</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
